@@ -16,7 +16,7 @@ parse_datetime <- function(s, format="%Y-%m-%d %H:%M:%S") {
 ########################################
 
 # load each month of the trip data into one big data frame
-csvs <- Sys.glob('data/*-tripdata.csv')
+csvs <- Sys.glob('data/citibike/*-tripdata.csv')
 trips <- data.frame()
 for (csv in csvs) {
   tmp <- read.table(csv, header=T, sep=',', na.strings='\\N')
@@ -49,7 +49,7 @@ setnames(stationcap, c('station.name', 'station_capacity'),
 ########################################
 # load and clean station availability data
 ########################################
-availability <- read.delim(file = gzfile("data/availability.tsv.gz"), header = F,
+availability <- read.delim(file = gzfile("data/station_availability.csv"), header = F,
                            col.names = c("station.name", "timestamp", "interval", "bikes.available"))
 availability <- mutate(availability,
                        interval = as.POSIXct(interval, origin = "1970-01-01"),
@@ -140,7 +140,7 @@ stationprox <- stationprox[ , list(
   station.1 = start.station.name,
   station.2 = end.station.name,
   d)]
-write.csv(stationprox, file="stationprox.csv", row.names = FALSE)
+write.csv(stationprox, file="data/stationprox.csv", row.names = FALSE)
 
 
 ########################################

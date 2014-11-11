@@ -13,7 +13,7 @@
 
 # set a relative path for the citibike data
 # (go two directories up, then into the data/citibike directory)
-DATA_DIR=../../data/citibike
+DATA_DIR=data/citibike
 
 # create the data directory if it doesn't exist
 [ -d $DATA_DIR ] || mkdir $DATA_DIR

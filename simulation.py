@@ -3,6 +3,10 @@ import csv
 import os
 import copy
 import sys 
+import random
+
+random.seed("Jul-31-2014")
+
 """
 Created on Thu Jul 31 18:09:55 2014
 
@@ -65,25 +69,37 @@ with open(station_prox_file, 'rb') as f:
 # read in a flag for simulation strategy
 # "greedy": greedy re-routing to best nearby station on start and destination
 # "rider": rider flow only, ignoring vans
-if len(sys.argv) < 2:
+if len(sys.argv) < 5:
     print "usage: %s <strategy>" % sys.argv[0]
-    print "please enter a simulation strategy, either 'greedy' or 'rider'"
+    exit_string = "please enter a simulation strategy, either 'greedy' or 'rider'" + "\nand a time frame for resetting, either 'daily', 'weekly', \n'monthly', or 'once' which resets the system only once randomly"
+    print exit_string
     sys.exit(1)
 
 strategy = sys.argv[1]
+reset_time = sys.argv[2]
+willing_rebalance = sys.argv[3]
+trip_duration = sys.argv[4]
 if strategy != "greedy" and strategy != "rider":
     print "%s is not a valid strategy" % strategy
     sys.exit(1)
-    
+
+if reset_time != "weekly" and reset_time != "monthly" and reset_time != "once":
+    print "%s is not a valid time frame" % reset_time
+    sys.exit(1)
+
+if willing_rebalance != "random" and willing_rebalance != "night" and willing_rebalance != "day" and willing_rebalance != "all":
+    print "%s is not a valid rebalancing behavior" % willing_rebalance
+
+if trip_duration != "instant" and trip_duration != "approximate":
+    print "%s is not a valid trip duration" % trip_duration
+
 # open input file with actual trips: start station, start time, and end station
 
 trips_sim_file = "data/trips_sim.csv"
 with open(trips_sim_file, 'rb') as f:
         reader = csv.DictReader(f)
 
-        # track previous day, time, and last reset date
-        previous_d = ""
-        previous_time = ""
+        # track previous reset date
         last_reset_date = ""
         print_this = False
 
@@ -92,13 +108,23 @@ with open(trips_sim_file, 'rb') as f:
 
         # loop over each actual trip
         for row in reader:
+            if (willing_rebalance == "random" and random.randint(0,1) == 0):
+                continue
+
             start_station = row["start.station.name"]
             end_station = row["end.station.name"]
 
             # extract year-month-day in d, time in t, and hour of day
             d, t = row["starttime"].split()
             hour = int(t.split(':')[0])
-            
+            reset = False
+
+            if (willing_rebalance == "day" and hour < 6 and hour >= 12):
+                continue
+
+            if (willing_rebalance == "night" and hour >= 6 and hour < 12):
+                continue
+
             if start_station == "DeKalb Ave & Skillman St" or end_station == "DeKalb Ave & Skillman St":
                 continue
 
@@ -109,10 +135,35 @@ with open(trips_sim_file, 'rb') as f:
             if last_reset_date == "" and hour < 4:
                 continue
             # if this trip is after 4am and we haven't yet reset today
-            if hour >= 4 and last_reset_date != d:
-                last_reset_date = d                
+            if reset_time == "daily" and hour >= 4 and last_reset_date != d:
+                last_reset_date = d
+                reset = True
+            elif reset_time == "weekly" and hour >= 4 and last_reset_date != d:
+                
+                if last_reset_date != "":
+                    w = int(d.split('-')[2])
+                    w_last = int(str(last_reset_date).split('-')[2])
+                if last_reset_date == "" or int(w / 7) != int(w_last / 7):
+                    last_reset_date = d
+                    reset = True
+            
+            elif reset_time == "monthly" and hour >= 4 and last_reset_date != d:
+
+                if last_reset_date != "":
+                    m = int(d.split('-')[1])
+                    m_last = int(str(last_reset_date).split('-')[1])
+                if last_reset_date == "" or m != m_last:
+                    last_reset_date = d
+                    reset = True
+            
+            else:
+                if (random.randint(0,1) == 1) and last_reset_date == "":
+                    last_reset_date = d
+                    reset = True
+
                 # if not d in daily_avail:
                 #     continue
+            if reset == True:
                 for station in station_list:
                     if d in daily_avail and station in daily_avail[d]:
                         # set to availability of this station at 4am on this day
@@ -120,6 +171,7 @@ with open(trips_sim_file, 'rb') as f:
                     else:
                         # Set to that station's average at 4am across all days
                         availability[station] = average_daily_avail[station]
+                reset = False
 
             #            
             # Set rerouted stations: end station
@@ -132,10 +184,11 @@ with open(trips_sim_file, 'rb') as f:
                 current_min = stationpercent_end
                 current_winner = end_station
                 for station in station_prox[end_station]:
-                    altstationpercent = float(availability[station])/station_cap[station]
-                    if current_min > altstationpercent:
-                        current_min = altstationpercent
-                        current_winner = station
+                    if station in availability and station in station_cap:
+                        altstationpercent = float(availability[station])/station_cap[station]
+                        if current_min > altstationpercent:
+                            current_min = altstationpercent
+                            current_winner = station
                 rerouted_end_station = current_winner
             else:
                 # otherwise keep original destination
@@ -155,10 +208,11 @@ with open(trips_sim_file, 'rb') as f:
                 current_max = stationpercent_start
                 current_winner = start_station
                 for station in station_prox[start_station]:
-                    altstationpercent = float(availability[station])/station_cap[station]
-                    if current_max < altstationpercent:
-                        current_max = altstationpercent
-                        current_winner = station
+                    if station in availability and station in station_cap:
+                        altstationpercent = float(availability[station])/station_cap[station]
+                        if current_max < altstationpercent:
+                            current_max = altstationpercent
+                            current_winner = station
                 rerouted_start_station = current_winner
             else:
                 # otherwise keep original destination
