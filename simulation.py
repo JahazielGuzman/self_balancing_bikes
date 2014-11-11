@@ -59,12 +59,14 @@ station_prox_file = "data/stationprox.csv"
 with open(station_prox_file, 'rb') as f:
         reader = csv.DictReader(f)
         for row in reader:
-            station = row["station.1"]
+            station = row["target"]
             if not station in station_prox:
                 station_prox[station] = {}
                 station_prox[station][station] = 0
             
-            station_prox[station][row['station.2']] = float(row["d"]) 
+            station_prox[station][row['closest.1']] = float(row["prox.1"])
+            station_prox[station][row['closest.2']] = float(row["prox.2"])
+            station_prox[station][row['closest.3']] = float(row["prox.3"])
 
 # read in a flag for simulation strategy
 # "greedy": greedy re-routing to best nearby station on start and destination
