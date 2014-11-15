@@ -147,12 +147,12 @@ with open(trips_sim_file, 'rb') as f:
         hour = int(t.split(':')[0])
         minute = int(t.split(':')[1])
         reset = False
-        rebal = False
+        rebal = True
 
         # determine if users will choose to rebalance based on the time of day or randomly
-        rebal = rebal or (willing_rebalance == "day" and hour < 6 and hour >= 12) 
-        rebal = rebal or (willing_rebalance == "night" and hour >= 6 and hour < 12)
-        rebal = rebal or (willing_rebalance == "random" and random.randint(0,1) == 0)
+        rebal = rebal and not (willing_rebalance == "day" and hour < 6 and hour >= 12) 
+        rebal = rebal and not (willing_rebalance == "night" and hour >= 6 and hour < 12)
+        rebal = rebal and not (willing_rebalance == "random" and random.randint(0,1) == 0)
 
         if start_station == "DeKalb Ave & Skillman St" or end_station == "DeKalb Ave & Skillman St":
             continue
