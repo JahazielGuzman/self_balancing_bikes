@@ -217,7 +217,7 @@ with open(trips_sim_file, 'rb') as f:
             # determine if a bike should have arrived at that
             # station, if so add this bike to its availability
             for i in range(len(arrival_list)):
-                if arrival_list[i][0] < (hour * 60 + minute % 60):
+                if arrival_list[i][0] < (hour * 60 + minute):
                     availability[arrival_list[i][1]] += 1
                     to_del.append(i)
 
@@ -317,7 +317,7 @@ with open(trips_sim_file, 'rb') as f:
                 else:
                     trip_dist = trip_station_prox[start_station][end_station]
 
-                travel_time = int(trip_dist * min_per_mile)
+                travel_time = int(trip_dist * min_per_mile) + (hour*60 + minute)
 
                 # add the estimated arrival time for station rerouted_end_station to
                 # the arrival_list. We will account for this arrival after
