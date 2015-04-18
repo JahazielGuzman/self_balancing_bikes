@@ -16,7 +16,7 @@ parse_datetime <- function(s, format="%Y-%m-%d %H:%M:%S") {
 ########################################
 
 # load each month of the trip data into one big data frame
-csvs <- Sys.glob('data/citibike/*-tripdata.csv')
+csvs <- Sys.glob('data/citibike/2013*-tripdata.csv')
 trips <- data.frame()
 for (csv in csvs) {
   tmp <- read.table(csv, header=T, sep=',', na.strings='\\N')
