@@ -218,7 +218,7 @@ with open(trips_sim_file, 'rb') as f:
             # station, if so add this bike to its availability
             for i in range(len(arrival_list)):
                 if arrival_list[i][0] < (hour * 60 + minute):
-                    availability[arrival_list[i][1]] += 1
+                    availability[arrival_list[i][2]] += 1
                     to_del.append(i)
 
             for i in range(len(to_del)):
@@ -242,15 +242,14 @@ with open(trips_sim_file, 'rb') as f:
 
             
             for station in station_prox[end_station]:
-                if station in availability and station in station_cap:
-                    altstationpercent = float(availability[station])/station_cap[station]
-                    if current_min > altstationpercent:
-                        current_min = altstationpercent
-                        current_winner = station
-                    # determine if the current station is also the closest station
-                    if alt_station_mode == "closeness":
-                        if station_prox[end_station][station] < station_prox[end_station][current_closest] and station != end_station:
-                            current_closest = station
+                altstationpercent = float(availability[station])/station_cap[station]
+                if current_min > altstationpercent:
+                    current_min = altstationpercent
+                    current_winner = station
+                   # determine if the current station is also the closest station
+                if alt_station_mode == "closeness":
+                    if station_prox[end_station][station] < station_prox[end_station][current_closest] and station != end_station:
+                          current_closest = station
             # if the availability of current_closest station is only 10% different from that of the current winner
             # set it as the current_winner
             if alt_station_mode == "closeness":
@@ -280,14 +279,14 @@ with open(trips_sim_file, 'rb') as f:
                 current_closest = [i for i in station_prox[start_station].keys() if i != start_station][0]
             
             for station in station_prox[start_station]:
-                if station in availability and station in station_cap:
-                    altstationpercent = float(availability[station])/station_cap[station]
-                    if current_max < altstationpercent:
-                        current_max = altstationpercent
-                        current_winner = station
-                        if alt_station_mode == "closeness":
-                            if station_prox[start_station][station] < station_prox[start_station][current_closest] and station != start_station:
-                                current_closest = station
+                
+                altstationpercent = float(availability[station])/station_cap[station]
+                if current_max < altstationpercent:
+                    current_max = altstationpercent
+                    current_winner = station
+                    if alt_station_mode == "closeness":
+                        if station_prox[start_station][station] < station_prox[start_station][current_closest] and station != start_station:
+                            current_closest = station
             if alt_station_mode == "closeness":
                 if abs(current_max - float(availability[current_closest])/station_cap[current_closest]) < .1:
                     current_winner = current_closest
@@ -317,12 +316,12 @@ with open(trips_sim_file, 'rb') as f:
                 else:
                     trip_dist = trip_station_prox[start_station][end_station]
 
-                travel_time = int(trip_dist * min_per_mile) + (hour*60 + minute)
+                arrival_time = int(trip_dist * min_per_mile) + (hour*60 + minute)
 
                 # add the estimated arrival time for station rerouted_end_station to
                 # the arrival_list. We will account for this arrival after
-                # travel_time minutes have passed
-                arrival_list.append((travel_time,rerouted_end_station))
+                # arrival_time minutes have passed
+                arrival_list.append((arrival_time, rerouted_start_station, rerouted_end_station))
 
             print "\t".join(map(str,[row["starttime"],
                 rerouted_start_station,
